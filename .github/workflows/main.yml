@@ -1,0 +1,324 @@
+<!DOCTYPE html>  <html lang="ar" dir="rtl" data-theme="light">  
+<head>  
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+    <title>لعبة المعلم - Al-Muallim Cultural Quiz</title>  
+    <style>  
+        :root {  
+            --bg-color: #ffffff;  
+            --text-color: #2c3e50;  
+            --primary-color: #3498db;  
+            --secondary-color: #2ecc71;  
+            --danger-color: #e74c3c;  
+            --card-bg: #f8f9fa;  
+            --border-color: #e2e8f0;  
+            --shadow: 0 4px 6px rgba(0,0,0,0.05);  
+        }  
+        [data-theme="dark"] {  
+            --bg-color: #121212;  
+            --text-color: #e0e0e0;  
+            --primary-color: #2980b9;  
+            --secondary-color: #27ae60;  
+            --danger-color: #c0392b;  
+            --card-bg: #1e1e1e;  
+            --border-color: #333333;  
+            --shadow: 0 4px 6px rgba(0,0,0,0.3);  
+        }  
+        * {  
+            box-sizing: border-box;  
+            margin: 0;  
+            padding: 0;  
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;  
+            transition: background-color 0.3s, color 0.3s;  
+        }  
+        body {  
+            background-color: var(--bg-color);  
+            color: var(--text-color);  
+            min-height: 100vh;  
+            display: flex;  
+            flex-direction: column;  
+            justify-content: space-between;  
+        }  
+        header {  
+            display: flex;  
+            justify-content: space-between;  
+            align-items: center;  
+            padding: 15px 20px;  
+            background-color: var(--card-bg);  
+            border-bottom: 1px solid var(--border-color);  
+        }  
+        .logo-area {  
+            display: flex;  
+            align-items: center;  
+            gap: 10px;  
+            font-weight: bold;  
+            font-size: 1.2rem;  
+        }  
+        .controls {  
+            display: flex;  
+            gap: 10px;  
+        }  
+        button {  
+            background-color: var(--primary-color);  
+            color: white;  
+            border: none;  
+            padding: 8px 15px;  
+            border-radius: 8px;  
+            cursor: pointer;  
+            font-weight: bold;  
+        }  
+        button:hover {  
+            opacity: 0.9;  
+        }  
+        .container {  
+            max-width: 600px;  
+            margin: auto;  
+            padding: 20px;  
+            width: 100%;  
+            flex-grow: 1;  
+            display: flex;  
+            flex-direction: column;  
+            justify-content: center;  
+        }  
+        .card {  
+            background-color: var(--card-bg);  
+            border: 1px solid var(--border-color);  
+            padding: 25px;  
+            border-radius: 12px;  
+            box-shadow: var(--shadow);  
+            margin-bottom: 20px;  
+        }  
+        .menu-btn {  
+            display: block;  
+            width: 100%;  
+            padding: 15px;  
+            margin: 10px 0;  
+            font-size: 1.1rem;  
+            text-align: center;  
+            border-radius: 10px;  
+        }  
+        .options-grid {  
+            display: grid;  
+            gap: 10px;  
+            margin-top: 15px;  
+        }  
+        .option-btn {  
+            background-color: var(--bg-color);  
+            color: var(--text-color);  
+            border: 1px solid var(--border-color);  
+            padding: 12px;  
+            text-align: right;  
+            border-radius: 8px;  
+            cursor: pointer;  
+            font-size: 1rem;  
+        }  
+        [data-theme="dark"] .option-btn {  
+            background-color: #252525;  
+        }  
+        .option-btn:hover {  
+            background-color: var(--primary-color);  
+            color: white;  
+        }  
+        footer {  
+            text-align: center;  
+            padding: 10px;  
+            font-size: 0.85rem;  
+            color: gray;  
+            border-top: 1px solid var(--border-color);  
+        }  
+        .hidden {  
+            display: none !important;  
+        }  
+        input, select {  
+            width: 100%;  
+            padding: 10px;  
+            margin: 8px 0;  
+            border-radius: 8px;  
+            border: 1px solid var(--border-color);  
+            background-color: var(--bg-color);  
+            color: var(--text-color);  
+        }  
+        .leaderboard-item {  
+            display: flex;  
+            justify-content: space-between;  
+            padding: 10px;  
+            border-bottom: 1px solid var(--border-color);  
+        }  
+    </style>  
+</head>  
+<body>  <header>  
+    <div class="logo-area">  
+        <span>✏️</span>  
+        <span id="app-title">المعلّم | Al-Muallim</span>  
+    </div>  
+    <div class="controls">  
+        <button onclick="toggleTheme()">🌓</button>  
+        <button onclick="toggleLang()" id="lang-btn">EN</button>  
+    </div>  
+</header>  
+
+<div class="container">  
+    <!-- القائمة الرئيسية -->  
+    <div id="main-menu" class="card">  
+        <h2 style="text-align: center; margin-bottom: 20px;" id="welcome-text">مرحباً بك في لعبة المعلّم</h2>  
+        <button class="menu-btn" onclick="startQuiz()" id="btn-start">ابدأ اللعب</button>  
+        <button class="menu-btn" onclick="showLeaderboard()" id="btn-leaderboard">أفضل اللاعبين</button>  
+        <button class="menu-btn" onclick="showProfile()" id="btn-profile">الملف الشخصي والإعدادات</button>  
+    </div>  
+
+    <!-- شاشة الأسئلة -->  
+    <div id="quiz-screen" class="card hidden">  
+        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">  
+            <span id="question-counter">السؤال 1 / 10</span>  
+            <span id="score-display">النقاط: 0</span>  
+        </div>  
+        <h3 id="question-text" style="margin-bottom: 20px;">نص السؤال هنا؟</h3>  
+        <div class="options-grid" id="options-container">  
+            <!-- الخيارات تولد برمجياً -->  
+        </div>  
+    </div>  
+
+    <!-- شاشة إنهاء المرحلة -->  
+    <div id="result-screen" class="card hidden" style="text-align: center;">  
+        <h2 id="result-title">تهانينا!</h2>  
+        <p id="result-score-text" style="margin: 15px 0; font-size: 1.2rem;"></p>  
+        <button class="menu-btn" onclick="returnToMenu()" id="btn-home">العودة إلى الرئيسية</button>  
+    </div>  
+
+    <!-- الملف الشخصي -->  
+    <div id="profile-screen" class="card hidden">  
+        <h3 style="margin-bottom: 15px;" id="profile-title">الملف الشخصي</h3>  
+        <label id="lbl-name">اسم اللاعب:</label>  
+        <input type="text" id="player-name" value="السيّد علي الحيدري">  
+        <label id="lbl-age">العمر:</label>  
+        <input type="number" id="player-age" value="15">  
+        <label id="lbl-country">البلد:</label>  
+        <select id="player-country">  
+            <option value="🇮🇶 العراق">العراق 🇮🇶</option>  
+            <option value="🇸🇦 السعودية">السعودية 🇸🇦</option>  
+            <option value="🇪🇬 مصر">مصر 🇪🇬</option>  
+            <option value="🇦🇪 الإمارات">الإمارات 🇦🇪</option>  
+            <option value="🇰🇼 الكويت">الكويت 🇰🇼</option>  
+        </select>  
+        <button class="menu-btn" onclick="saveProfile()" id="btn-save" style="margin-top: 15px;">حفظ التعديلات</button>  
+        <button class="menu-btn" onclick="returnToMenu()" style="background-color: gray;" id="btn-back">رجوع</button>  
+    </div>  
+
+    <!-- لوحة الترتيب العالمي -->  
+    <div id="leaderboard-screen" class="card hidden">  
+        <h3 style="margin-bottom: 15px; text-align: center;" id="leaderboard-title">أفضل اللاعبين</h3>  
+        <div id="leaderboard-list">  
+            <!-- قائمة اللاعبين الوهمية/الحقيقية -->  
+            <div class="leaderboard-item"><span>1. السيّد علي الحيدري 🇮🇶</span> <strong>5500 نقطة</strong></div>  
+            <div class="leaderboard-item"><span>2. أحمد محمد 🇸🇦</span> <strong>4800 نقطة</strong></div>  
+            <div class="leaderboard-item"><span>3. يوسف علي 🇪🇬</span> <strong>4200 نقطة</strong></div>  
+        </div>  
+        <button class="menu-btn" onclick="returnToMenu()" style="margin-top: 20px;" id="btn-lb-back">رجوع</button>  
+    </div>  
+</div>  
+
+<footer>  
+    برمجة وتطوير: علاوي ضاغطهم  
+</footer>  
+
+<script>  
+    // بيانات اللعبة وقواعد البيانات واللغات  
+    let currentLang = 'ar';  
+    let score = 0;  
+    let currentQuestionIndex = 0;  
+    let stageScore = 0;  
+
+    const questions = [  
+        { q: "ما عاصمة دولة فرنسا؟", options: ["لندن", "باريس", "برلين", "روما"], answer: 1 },  
+        { q: "أي العناصر التالية يعتبر من الغازات النبيلة؟", options: ["الأكسجين", "الهيليوم", "النتروجين", "الكلور"], answer: 1 },  
+        { q: "في أي قارة تقع دولة اليابان؟", options: ["إفريقيا", "أوروبا", "آسيا", "أمريكا الشمالية"], answer: 2 },  
+        { q: "من هو صاحب كتاب الأغاني؟", options: ["أبو الفرج الأصفهاني", "الجاحظ", "المتنبي", "ابن خلدون"], answer: 0 },  
+        { q: "ما هو العنصر الكيميائي الذي يرمز له بالحرف (Fe)؟", options: ["الذهب", "الحديد", "الفضة", "النحاس"], answer: 1 },  
+        { q: "كم عدد الكواكب في المجموعة الشمسية؟", options: ["7", "8", "9", "10"], answer: 1 },  
+        { q: "أي المحيطات التالية هو الأكبر مساحة؟", options: ["المحيط الأطلسي", "المحيط الهندي", "المحيط الهادئ", "المحيط المتجمد الشمالي"], answer: 2 },  
+        { q: "ما هي عاصمة أستراليا؟", options: ["سيدني", "ملبورن", "كانبيرا", "بريزبان"], answer: 2 },  
+        { q: "في أي عام انتهت الحرب العالمية الثانية؟", options: ["1942", "1945", "1950", "1939"], answer: 1 },  
+        { q: "ما هو أسرع حيوان بري في العالم؟", options: ["الأسد", "الفهد (الشيتا)", "الغزال", "الحصان"], answer: 1 }  
+    ];  
+
+    function toggleTheme() {  
+        const html = document.documentElement;  
+        const currentTheme = html.getAttribute('data-theme');  
+        html.setAttribute('data-theme', currentTheme === 'dark' ? 'light' : 'dark');  
+    }  
+
+    function toggleLang() {  
+        currentLang = currentLang === 'ar' ? 'en' : 'ar';  
+        document.documentElement.setAttribute('dir', currentLang === 'ar' ? 'rtl' : 'ltr');  
+        document.getElementById('lang-btn').innerText = currentLang === 'ar' ? 'EN' : 'AR';  
+          
+        if(currentLang === 'en') {  
+            document.getElementById('app-title').innerText = "Al-Muallim | Quiz";  
+            document.getElementById('welcome-text').innerText = "Welcome to Al-Muallim Game";  
+            document.getElementById('btn-start').innerText = "Start Game";  
+            document.getElementById('btn-leaderboard').innerText = "Leaderboard";  
+            document.getElementById('btn-profile').innerText = "Profile & Settings";  
+        } else {  
+            document.getElementById('app-title').innerText = "المعلّم | Al-Muallim";  
+            document.getElementById('welcome-text').innerText = "مرحباً بك في لعبة المعلّم";  
+            document.getElementById('btn-start').innerText = "ابدأ اللعب";  
+            document.getElementById('btn-leaderboard').innerText = "أفضل اللاعبين";  
+            document.getElementById('btn-profile').innerText = "الملف الشخصي والإعدادات";  
+        }  
+    }  
+
+    function showScreen(screenId) {  
+        document.querySelectorAll('.container > div').forEach(el => el.classList.add('hidden'));  
+        document.getElementById(screenId).classList.remove('hidden');  
+    }  
+
+    function startQuiz() {  
+        currentQuestionIndex = 0;  
+        stageScore = 0;  
+        showScreen('quiz-screen');  
+        loadQuestion();  
+    }  
+
+    function loadQuestion() {  
+        if (currentQuestionIndex >= questions.length) {  
+            endQuiz();  
+            return;  
+        }  
+        const q = questions[currentQuestionIndex];  
+        document.getElementById('question-counter').innerText = `السؤال ${currentQuestionIndex + 1} / 10`;  
+        document.getElementById('score-display').innerText = `النقاط: ${stageScore}`;  
+        document.getElementById('question-text').innerText = q.q;  
+
+        const container = document.getElementById('options-container');  
+        container.innerHTML = '';  
+        q.options.forEach((opt, index) => {  
+            const btn = document.createElement('button');  
+            btn.className = 'option-btn';  
+            btn.innerText = opt;  
+            btn.onclick = () => checkAnswer(index, q.answer);  
+            container.appendChild(btn);  
+        });  
+    }  
+
+    function checkAnswer(selected, correct) {  
+        const pointsValues = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];  
+        if (selected === correct) {  
+            stageScore += pointsValues[currentQuestionIndex];  
+        }  
+        currentQuestionIndex++;  
+        loadQuestion();  
+    }  
+
+    function endQuiz() {  
+        showScreen('result-screen');  
+        document.getElementById('result-score-text').innerText = `مجموع النقاط التي جمعتها: ${stageScore} نقطة`;  
+    }  
+
+    function showLeaderboard() { showScreen('leaderboard-screen'); }  
+    function showProfile() { showScreen('profile-screen'); }  
+    function returnToMenu() { showScreen('main-menu'); }  
+    function saveProfile() { alert('تم حفظ التعديلات بنجاح!'); returnToMenu(); }  
+</script>
+
+</body>  
+</html>  سمّه ( index.html )
