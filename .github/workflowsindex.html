@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة المعلم - Al-Muallim Cultural Quiz</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #2c3e50;
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --card-bg: #f8f9fa;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --primary-color: #2980b9;
+            --secondary-color: #27ae60;
+            --danger-color: #c0392b;
+            --card-bg: #1e1e1e;
+            --border-color: #333333;
+            --shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+        .menu-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 1.1rem;
+            text-align: center;
+            border-radius: 10px;
+        }
+        .options-grid {
+            display: grid;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .option-btn {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: right;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        [data-theme="dark"] .option-btn {
+            background-color: #252525;
+        }
+        .option-btn:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        footer {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.85rem;
+            color: gray;
+            border-top: 1px solid var(--border-color);
+        }
+        .hidden {
+            display: none !important;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <span>✏️</span>
+            <span id="app-title">المعلّم | Al-Muallim</span>
+        </div>
+        <div class="controls">
+            <button onclick="toggleTheme()">🌓</button>
+            <button onclick="toggleLang()" id="lang-btn">EN</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- القائمة الرئيسية -->
+        <div id="main-menu" class="card">
+            <h2 style="text-align: center; margin-bottom: 20px;" id="welcome-text">مرحباً بك في لعبة المعلّم</h2>
+            <button class="menu-btn" onclick="startQuiz()" id="btn-start">ابدأ اللعب</button>
+            <button class="menu-btn" onclick="showLeaderboard()" id="btn-leaderboard">أفضل اللاعبين</button>
+            <button class="menu-btn" onclick="showProfile()" id="btn-profile">الملف الشخصي والإعدادات</button>
+        </div>
+
+        <!-- شاشة الأسئلة -->
+        <div id="quiz-screen" class="card hidden">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <span id="question-counter">السؤال 1 / 10</span>
+                <span id="score-display">النقاط: 0</span>
+            </div>
+            <h3 id="question-text" style="margin-bottom: 20px;">نص السؤال هنا؟</h3>
+            <div class="options-grid" id="options-container">
+                <!-- الخيارات تولد برمجياً -->
+            </div>
+        </div>
+
+        <!-- شاشة إنهاء المرحلة -->
+        <div id="result-screen" class="card hidden" style="text-align: center;">
+            <h2 id="result-title">تهانينا!</h2>
+            <p id="result-score-text" style="margin: 15px 0; font-size: 1.2rem;"></p>
+            <button class="menu-btn" onclick="returnToMenu()" id="btn-home">العودة إلى الرئيسية</button>
+        </div>
+
+        <!-- الملف الشخصي -->
+        <div id="profile-screen" class="card hidden">
+            <h3 style="margin-bottom: 15px;" id="profile-title">الملف الشخصي</h3>
+            <label id="lbl-name">اسم اللاعب:</label>
+            <input type="text" id="player-name" value="السيّد علي الحيدري">
+            <label id="lbl-age">العمر:</label>
+            <input type="number" id="player-age" value="15">
+            <label id="lbl-country">البلد:</label>
+            <select id="player-country">
+                <option value="🇮🇶 العراق">العراق 🇮🇶</option>
+                <option value="🇸🇦 السعودية">السعودية 🇸🇦</option>
+                <option value="🇪🇬 مصر
+                
