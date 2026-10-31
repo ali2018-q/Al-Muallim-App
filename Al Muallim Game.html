@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المعلّم | Al-Muallim</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        darkbg: '#0f172a',
+                        darkcard: '#1e293b'
+                    },
+                    fontFamily: {
+                        sans: ['Tajawal', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            user-select: none;
+        }
+
+        /* Glassmorphism & Custom Animations */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .pulse-subtle {
+            animation: pulseSubtle 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseSubtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.5);
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-sky-500 selection:text-white">
+
+    <!-- Firebase SDK Modular Import -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Config Setup
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'al-muallim-game-default';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "demo-api-key",
+            authDomain: "demo-app.firebaseapp.com",
+            projectId: "demo-app",
+            storageBucket: "demo-app.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.auth = auth;
+        window.appId = appId;
+        window.firestoreDoc = doc;
+        window.firestoreSetDoc = setDoc;
+        window.firestoreGetDoc = getDoc;
+        window.firestoreUpdateDoc = updateDoc;
+        window.firestoreCollection = collection;
+        window.firestoreOnSnapshot = onSnapshot;
+
+        // Auth Init
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.warn("Auth initialization fallback:", err);
+            }
+        }
+        initAuth();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.currentUser = user;
+                if (window.onUserAuthenticated) {
+                    window.onUserAuthenticated(user);
+                }
+            }
+        });
+    </script>
+
+    <!-- App Header & Controls -->
+    <header class="w-full max-w-4xl mx-auto px-4 pt-4 pb-2 flex items-center justify-between z-20">
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-3 cursor-pointer" onclick="app.navigateTo('main')">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-sky-500/30">
+                <i class="fa-solid font-bold text-xl fa-pen-nib"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-tight leading-none bg-gradient-to-r from-sky-600 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                    <span data-i18n="appTitle">المعلّم</span>
+                </h1>
+                <span class="text-xs text-slate-400 font-semibold tracking-wider uppercase">Al-Muallim</span>
+            </div>
+        </div>
+
+        <!-- System Controls (Sound, Lang, Dark Mode) -->
+        <div class="flex items-center gap-2">
+            <!-- Audio Toggle Button -->
+            <button id="soundBtn" onclick="audio.toggleMusic()" class="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700/60 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:scale-105 transition-all">
+                <i id="soundIcon" class="fa-solid fa-music text-slate-400"></i>
+            </button>
+
+            <!-- Language Switcher -->
+            <button onclick="app.toggleLanguage()" class="h-10 px-3 rounded-xl bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700/60 flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:scale-105 transition-all">
+                <i class="fa-solid fa-globe text-sky-500"></i>
+                <span id="langLabel">EN</span>
+            </button>
+
+            <!-- Theme Toggle -->
+            <button onclick="app.toggleTheme()" class="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 shadow-md border border-slate-200 dark:border-slate-700/60 flex items-center justify-center text-amber-500 dark:text-sky-400 hover:scale-105 transition-all">
+                <i id="themeIcon" class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-4xl mx-auto px-4 py-4 flex-grow flex flex-col justify-center items-center relative z-10">
+        
+        <!-- View 1: Main Menu -->
+        <section id="view-main" class="w-full max-w-md space-y-6 text-center animate-fade-in">
+            <!-- Hero Card -->
+            <div class="glass-card rounded-3xl p-8 shadow-xl shadow-sky-900/5 relative overflow-hidden border border-slate-200 dark:border-slate-800">
+                <div class="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-sky-500 via-indigo-500 to-purple-600 text-white flex items-center justify-center shadow-2xl shadow-sky-500/40 mb-5 pulse-subtle">
+                    <i class="fa-solid fa-pen-nib text-4xl"></i>
+                </div>
+                <h2 class="text-3xl font-black mb-2" data-i18n="appTitle">المعلّم</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed px-4" data-i18n="heroSubtitle">
+                    اختبر معلوماتك العامة وسرعة بديهتك في رحلة معرفية شيقة من 10 مراحل!
+                </p>
+                
+                <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800/80 flex justify-around">
+                    <div>
+                        <span class="block text-xs text-slate-400" data-i18n="totalScore">رصيدك الحالي</span>
+                        <span id="mainPlayerScore" class="text-xl font-black text-sky-600 dark:text-sky-400">0</span>
+                    </div>
+                    <div class="w-px bg-slate-200 dark:bg-slate-800"></div>
+                    <div>
+                        <span class="block text-xs text-slate-400" data-i18n="completedStages">المراحل المكتملة</span>
+                        <span id="mainPlayerStages" class="text-xl font-black text-indigo-600 dark:text-indigo-400">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Actions -->
+            <div class="space-y-3">
+                <button onclick="app.startNewGame()" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-black text-lg shadow-xl shadow-sky-500/30 flex items-center justify-center gap-3 transition-all transform active:scale-95">
+                    <i class="fa-solid fa-play"></i>
+                    <span data-i18n="btnStart">ابدأ</span>
+                </button>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="app.navigateTo('leaderboard')" class="py-3.5 px-4 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-100 font-bold border border-slate-200 dark:border-slate-700/60 shadow-md flex items-center justify-center gap-2 transition-all">
+                        <i class="fa-solid fa-trophy text-amber-500"></i>
+                        <span data-i18n="btnLeaderboard">أفضل اللاعبين</span>
+                    </button>
+                    <button onclick="app.navigateTo('profile')" class="py-3.5 px-4 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-100 font-bold border border-slate-200 dark:border-slate-700/60 shadow-md flex items-center justify-center gap-2 transition-all">
+                        <i class="fa-solid fa-user-gear text-sky-500"></i>
+                        <span data-i18n="btnProfile">المعلومات</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- View 2: Quiz Gameplay Screen -->
+        <section id="view-game" class="w-full max-w-xl space-y-5 hidden">
+            <!-- Stage Status Header -->
+            <div class="glass-card rounded-2xl p-4 shadow-lg border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-sky-100 dark:bg-sky-950/80 text-sky-600 dark:text-sky-400 font-black flex items-center justify-center text-lg" id="qNumberBadge">
+                        1
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400" data-i18n="questionProgress">السؤال من 10</div>
+                        <div class="text-sm font-bold text-slate-700 dark:text-slate-200" id="qDifficultyLabel">سهل</div>
+                    </div>
+                </div>
+                <!-- Score Indicator for Current Question -->
+                <div class="text-right">
+                    <div class="text-xs text-slate-400" data-i18n="questionReward">نقاط السؤال</div>
+                    <div class="text-base font-black text-emerald-500" id="qPointsBadge">+100</div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden p-0.5">
+                <div id="gameProgressBar" class="bg-gradient-to-r from-sky-500 to-indigo-600 h-full rounded-full transition-all duration-300 w-10%"></div>
+            </div>
+
+            <!-- Question Box -->
+            <div class="glass-card rounded-3xl p-6 md:p-8 shadow-xl border border-slate-200 dark:border-slate-800 space-y-6 text-center min-h-[160px] flex items-center justify-center">
+                <h3 id="questionText" class="text-xl md:text-2xl font-bold leading-relaxed text-slate-800 dark:text-slate-100">
+                    جاري تحميل السؤال...
+                </h3>
+            </div>
+
+            <!-- Choices Grid -->
+            <div id="choicesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <!-- Option buttons injected dynamically -->
+            </div>
+        </section>
+
+        <!-- View 3: Leaderboard Screen -->
+        <section id="view-leaderboard" class="w-full max-w-2xl space-y-4 hidden">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-2xl font-black flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-amber-500"></i>
+                    <span data-i18n="leaderboardTitle">قائمة أفضل اللاعبين</span>
+                </h2>
+                <button onclick="app.navigateTo('main')" class="text-sm text-sky-500 hover:underline font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-arrow-right dir-reflect"></i>
+                    <span data-i18n="btnBack">الرئيسية</span>
+                </button>
+            </div>
+
+            <div class="glass-card rounded-3xl p-4 md:p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-3 max-h-[65vh] overflow-y-auto">
+                <div id="leaderboardList" class="space-y-2">
+                    <!-- Dynamic Leaderboard Items -->
+                    <div class="text-center py-8 text-slate-400" data-i18n="loading">جاري التحديث...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View 4: Player Profile & Settings -->
+        <section id="view-profile" class="w-full max-w-lg space-y-5 hidden">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-2xl font-black flex items-center gap-2">
+                    <i class="fa-solid fa-id-card text-sky-500"></i>
+                    <span data-i18n="profileTitle">الملف الشخصي</span>
+                </h2>
+                <button onclick="app.navigateTo('main')" class="text-sm text-sky-500 hover:underline font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-arrow-right dir-reflect"></i>
+                    <span data-i18n="btnBack">الرئيسية</span>
+                </button>
+            </div>
+
+            <div class="glass-card rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-800 space-y-5">
+                <!-- Avatar & Selected Country Flag -->
+                <div class="flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-3xl text-white shadow-lg shadow-sky-500/20" id="profileFlagBadge">
+                        🇸🇦
+                    </div>
+                    <div>
+                        <h3 id="profileDisplayName" class="text-xl font-bold text-slate-800 dark:text-slate-100">لاعب</h3>
+                        <p class="text-xs text-slate-400" id="profileUniqueId">ID: Loading...</p>
+                    </div>
+                </div>
+
+                <!-- Form Inputs -->
+                <form id="profileForm" onsubmit="app.saveProfile(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1" data-i18n="labelName">اسم اللاعب</label>
+                        <input type="text" id="inputName" required maxlength="25" class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1" data-i18n="labelAge">العمر</label>
+                            <input type="number" id="inputAge" min="5" max="120" required class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1" data-i18n="labelCountry">البلد / العلم</label>
+                            <select id="selectCountry" class="w-full px-3 py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm">
+                                <!-- Populated dynamically with 120 flags -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full py-3.5 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm shadow-md transition-all">
+                        <span data-i18n="btnSaveProfile">حفظ البيانات</span>
+                    </button>
+                </form>
+
+                <!-- Detailed Player Stats -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-3 text-center">
+                    <div class="bg-slate-100/70 dark:bg-slate-800/50 p-3 rounded-2xl">
+                        <div class="text-xs text-slate-400" data-i18n="statCorrect">إجابات صحيحة</div>
+                        <div class="text-lg font-black text-emerald-500" id="statCorrectCount">0</div>
+                    </div>
+                    <div class="bg-slate-100/70 dark:bg-slate-800/50 p-3 rounded-2xl">
+                        <div class="text-xs text-slate-400" data-i18n="statWrong">إجابات خاطئة</div>
+                        <div class="text-lg font-black text-rose-500" id="statWrongCount">0</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- View 5: Stage Completion Overlay Screen -->
+        <section id="view-result" class="w-full max-w-md space-y-6 text-center hidden">
+            <div class="glass-card rounded-3xl p-8 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-6">
+                <div class="w-20 h-20 mx-auto rounded-3xl bg-amber-500 text-white flex items-center justify-center shadow-xl shadow-amber-500/30 text-4xl">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+                
+                <div>
+                    <h2 class="text-2xl font-black text-slate-800 dark:text-slate-100" data-i18n="stageCongrats">تهانينا! أكملت المرحلة</h2>
+                    <p class="text-xs text-slate-400 mt-1" data-i18n="stageSummary">ملخص أداء المرحلة</p>
+                </div>
+
+                <div class="bg-slate-100 dark:bg-slate-800/80 p-5 rounded-2xl space-y-3">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-500 dark:text-slate-400" data-i18n="pointsEarned">النقاط المكتسبة</span>
+                        <span id="resultStageScore" class="font-black text-emerald-500 text-lg">+0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm border-t border-slate-200 dark:border-slate-700 pt-2">
+                        <span class="text-slate-500 dark:text-slate-400" data-i18n="totalScore">الرصيد الكلي</span>
+                        <span id="resultTotalScore" class="font-black text-sky-500 text-lg">0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm border-t border-slate-200 dark:border-slate-700 pt-2">
+                        <span class="text-slate-500 dark:text-slate-400" data-i18n="correctAnswers">الإجابات الصحيحة</span>
+                        <span id="resultCorrectStats" class="font-bold text-slate-700 dark:text-slate-200">0/10</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <button onclick="app.startNewGame()" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-sky-500 to-indigo-600 text-white font-bold shadow-lg shadow-sky-500/30 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span data-i18n="btnPlayAgain">العب مجدداً</span>
+                    </button>
+                    <button onclick="app.navigateTo('main')" class="w-full py-3 px-4 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-300 dark:hover:bg-slate-700 transition-all">
+                        <span data-i18n="btnHome">العودة للرئيسية</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Developer Credits -->
+    <footer class="w-full max-w-4xl mx-auto px-4 py-4 text-center z-10">
+        <p class="text-xs text-slate-400 dark:text-slate-500 font-medium tracking-wide">
+            <span data-i18n="developerCredit">برمجة وتطوير: علاوي ضاغطهم</span>
+        </p>
+    </footer>
+
+    <!-- Audio Synthesizer Engine (Web Audio API) -->
+    <script>
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.musicPlaying = false;
+                this.bgTimer = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playTone(freq, type = 'sine', duration = 0.2, gainValue = 0.1) {
+                try {
+                    this.init();
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(gainValue, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            }
+
+            playCorrect() {
+                this.playTone(523.25, 'sine', 0.15, 0.2); // C5
+                setTimeout(() => this.playTone(659.25, 'sine', 0.25, 0.2), 120); // E5
+            }
+
+            playWrong() {
+                this.playTone(220, 'sawtooth', 0.2, 0.25);
+                setTimeout(() => this.playTone(196, 'sawtooth', 0.3, 0.25), 150);
+            }
+
+            playComplete() {
+                const notes = [440, 554.37, 659.25, 880];
+                notes.forEach((n, i) => {
+                    setTimeout(() => this.playTone(n, 'triangle', 0.3, 0.2), i * 140);
+                });
+            }
+
+            toggleMusic() {
+                this.init();
+                this.musicPlaying = !this.musicPlaying;
+                const icon = document.getElementById('soundIcon');
+                if (this.musicPlaying) {
+                    icon.className = 'fa-solid fa-volume-high text-sky-500';
+                    this.startBgAmbience();
+                } else {
+                    icon.className = 'fa-solid fa-music text-slate-400';
+                    this.stopBgAmbience();
+                }
+            }
+
+            startBgAmbience() {
+                if (this.bgTimer) clearInterval(this.bgTimer);
+                const ambientNotes = [261.63, 329.63, 392.00, 523.25];
+                let idx = 0;
+                this.bgTimer = setInterval(() => {
+                    if (this.musicPlaying) {
+                        this.playTone(ambientNotes[idx % ambientNotes.length], 'sine', 1.5, 0.03);
+                        idx++;
+                    }
+                }, 2000);
+            }
+
+            stopBgAmbience() {
+                if (this.bgTimer) clearInterval(this.bgTimer);
+            }
+        }
+
+        const audio = new SoundEngine();
+    </script>
+
+    <!-- App Logic & Firebase Integration -->
+    <script>
+        // Languages Dictionary
+        const translations = {
+            ar: {
+                appTitle: "المعلّم",
+                heroSubtitle: "اختبر معلوماتك العامة وسرعة بديهتك في رحلة معرفية شيقة من 10 مراحل!",
+                totalScore: "رصيدك الحالي",
+                completedStages: "المراحل المكتملة",
+                btnStart: "ابدأ",
+                btnLeaderboard: "أفضل اللاعبين",
+                btnProfile: "المعلومات",
+                questionProgress: "السؤال من 10",
+                questionReward: "نقاط السؤال",
+                leaderboardTitle: "قائمة أفضل اللاعبين",
+                profileTitle: "الملف الشخصي",
+                btnBack: "الرئيسية",
+                labelName: "اسم اللاعب",
+                labelAge: "العمر",
+                labelCountry: "البلد / العلم",
+                btnSaveProfile: "حفظ البيانات",
+                statCorrect: "إجابات صحيحة",
+                statWrong: "إجابات خاطئة",
+                stageCongrats: "تهانينا! أكملت المرحلة",
+                stageSummary: "ملخص أداء المرحلة",
+                pointsEarned: "النقاط المكتسبة",
+                correctAnswers: "الإجابات الصحيحة",
+                btnPlayAgain: "العب مجدداً",
+                btnHome: "العودة للرئيسية",
+                developerCredit: "برمجة وتطوير: علاوي ضاغطهم",
+                loading: "جاري التحميل...",
+                diffEasy: "سهل",
+                diffMedium: "متوسط",
+                diffHard: "صعب",
+                diffVeryHard: "صعب جداً"
+            },
+            en: {
+                appTitle: "Al-Muallim",
+                heroSubtitle: "Test your general knowledge and quick thinking through an exciting 10-question stage!",
+                totalScore: "Current Score",
+                completedStages: "Stages Cleared",
+                btnStart: "Play Now",
+                btnLeaderboard: "Leaderboard",
+                btnProfile: "Profile",
+                questionProgress: "Question of 10",
+                questionReward: "Question Points",
+                leaderboardTitle: "Global Leaderboard",
+                profileTitle: "Player Profile",
+                btnBack: "Main Menu",
+                labelName: "Player Name",
+                labelAge: "Age",
+                labelCountry: "Country / Flag",
+                btnSaveProfile: "Save Profile",
+                statCorrect: "Correct Answers",
+                statWrong: "Wrong Answers",
+                stageCongrats: "Congratulations!",
+                stageSummary: "Stage Summary",
+                pointsEarned: "Points Earned",
+                correctAnswers: "Correct Answers",
+                btnPlayAgain: "Play Again",
+                btnHome: "Back to Home",
+                developerCredit: "Developed by: Allawi Dhaagethom",
+                loading: "Loading...",
+                diffEasy: "Easy",
+                diffMedium: "Medium",
+                diffHard: "Hard",
+                diffVeryHard: "Very Hard"
+            }
+        };
+
+        // 120 World Flags & Countries Data
+        const countriesList = [
+            { code: "SA", name: "Saudi Arabia / السعودية", flag: "🇸🇦" },
+            { code: "IQ", name: "Iraq / العراق", flag: "🇮🇶" },
+            { code: "EG", name: "Egypt / مصر", flag: "🇪🇬" },
+            { code: "AE", name: "UAE / الإمارات", flag: "🇦🇪" },
+            { code: "KW", name: "Kuwait / الكويت", flag: "🇰🇼" },
+            { code: "QA", name: "Qatar / قطر", flag: "🇶🇦" },
+            { code: "BH", name: "Bahrain / البحرين", flag: "🇧🇭" },
+            { code: "OM", name: "Oman / عُمان", flag: "🇴🇲" },
+            { code: "JO", name: "Jordan / الأردن", flag: "🇯🇴" },
+            { code: "LB", name: "Lebanon / لبنان", flag: "🇱🇧" },
+            { code: "SY", name: "Syria / سوريا", flag: "🇸🇾" },
+            { code: "PS", name: "Palestine / فلسطين", flag: "🇵🇸" },
+            { code: "MA", name: "Morocco / المغرب", flag: "🇲🇦" },
+            { code: "DZ", name: "Algeria / الجزائر", flag: "🇩🇿" },
+            { code: "TN", name: "Tunisia / تونس", flag: "🇹🇳" },
+            { code: "LY", name: "Libya / ليبيا", flag: "🇱🇾" },
+            { code: "SD", name: "Sudan / السودان", flag: "🇸🇩" },
+            { code: "YE", name: "Yemen / اليمن", flag: "🇾🇪" },
+            { code: "US", name: "USA / أمريكا", flag: "🇺🇸" },
+            { code: "GB", name: "UK / بريطانيا", flag: "🇬🇧" },
+            { code: "FR", name: "France / فرنسا", flag: "🇫🇷" },
+            { code: "DE", name: "Germany / ألمانيا", flag: "🇩🇪" },
+            { code: "IT", name: "Italy / إيطاليا", flag: "🇮🇹" },
+            { code: "ES", name: "Spain / إسبانيا", flag: "🇪🇸" },
+            { code: "TUR", name: "Turkey / تركيا", flag: "🇹🇷" },
+            { code: "CA", name: "Canada / كندا", flag: "🇨🇦" },
+            { code: "BR", name: "Brazil / البرازيل", flag: "🇧🇷" },
+            { code: "AR", name: "Argentina / الأرجنتين", flag: "🇦🇷" },
+            { code: "JP", name: "Japan / اليابان", flag: "🇯🇵" },
+            { code: "CN", name: "China / الصين", flag: "🇨🇳" },
+            { code: "IN", name: "India / الهند", flag: "🇮🇳" },
+            { code: "KR", name: "South Korea / كوريا الجنوبية", flag: "🇰🇷" },
+            { code: "RU", name: "Russia / روسيا", flag: "🇷🇺 text" },
+            { code: "AU", name: "Australia / أستراليا", flag: "🇦🇺" },
+            { code: "SE", name: "Sweden / السويد", flag: "🇸🇪" },
+            { code: "NO", name: "Norway / النرويج", flag: "🇳🇴" },
+            { code: "NL", name: "Netherlands / هولندا", flag: "🇳🇱" },
+            { code: "CH", name: "Switzerland / سويسرا", flag: "🇨🇭" },
+            { code: "MY", name: "Malaysia / ماليزيا", flag: "🇲🇾" },
+            { code: "ID", name: "Indonesia / إندونيسيا", flag: "🇮🇩" },
+            { code: "PK", name: "Pakistan / باكستان", flag: "🇵🇰" },
+            { code: "BD", name: "Bangladesh / بنغلاديش", flag: "🇧🇩" },
+            { code: "MX", name: "Mexico / المكسيك", flag: "🇲🇽" },
+            { code: "ZA", name: "South Africa / جنوب أفريقيا", flag: "🇿🇦" },
+            { code: "NG", name: "Nigeria / نيجيريا", flag: "🇳🇬" },
+            { code: "GR", name: "Greece / اليونان", flag: "🇬🇷" },
+            { code: "PT", name: "Portugal / البرتغال", flag: "🇵🇹" },
+            { code: "BE", name: "Belgium / بلجيكا", flag: "🇧🇪" },
+            { code: "AT", name: "Austria / النمسا", flag: "🇦🇹" },
+            { code: "DK", name: "Denmark / الدنمارك", flag: "🇩🇰" },
+            { code: "FI", name: "Finland / فنلندا", flag: "🇫🇮" },
+            { code: "PL", name: "Poland / بولندا", flag: "🇵🇱" },
+            { code: "IE", name: "Ireland / أيرلندا", flag: "🇮🇪" },
+            { code: "NZ", name: "New Zealand / نيوزيلندا", flag: "🇳🇿" },
+            { code: "SG", name: "Singapore / سنغافورة", flag: "🇸🇬" },
+            { code: "TH", name: "Thailand / تايلاند", flag: "🇹🇭" },
+            { code: "VN", name: "Vietnam / فيتنام", flag: "🇻🇳 text" },
+            { code: "PH", name: "Philippines / الفلبين", flag: "🇵🇭" },
+            { code: "CL", name: "Chile / تشيلي", flag: "🇨🇱" },
+            { code: "CO", name: "Colombia / كولومبيا", flag: "🇨🇴" }
+        ];
+
+        // Question Database (Culturally, scientifically, historically rich. STRICTLY NO RELIGIOUS TOPICS)
+        const questionBank = [
+            // Level 1 & 2: Easy (100 - 200 pts)
+            {
+                diff: 1, pts: 100,
+                ar: { q: "ما هي عاصمة جمهورية مصر العربية؟", opts: ["القاهرة", "الإسكندرية", "الجيزة", "أسوان"], a: 0 },
+                en: { q: "What is the capital of Egypt?", opts: ["Cairo", "Alexandria", "Giza", "Aswan"], a: 0 }
+            },
+            {
+                diff: 1, pts: 100,
+                ar: { q: "ما هو الكوكب الملقب بالكوكب الأحمر؟", opts: ["المريخ", "الزهرة", "المشتري", "زحل"], a: 0 },
+                en: { q: "Which planet is known as the Red Planet?", opts: ["Mars", "Venus", "Jupiter", "Saturn"], a: 0 }
+            },
+            {
+                diff: 2, pts: 200,
+                ar: { q: "ما هو أطول نهر في العالم؟", opts: ["نهر النيل", "نهر الأمازون", "نهر المسيسيبي", "نهر يانغتسي"], a: 0 },
+                en: { q: "What is the longest river in the world?", opts: ["Nile River", "Amazon River", "Mississippi River", "Yangtze River"], a: 0 }
+            },
+            {
+                diff: 2, pts: 200,
+                ar: { q: "كم عدد أضلاع المثلث؟", opts: ["3", "4", "5", "6"], a: 0 },
+                en: { q: "How many sides does a triangle have?", opts: ["3", "4", "5", "6"], a: 0 }
+            },
+
+            // Level 3 & 4: Medium (300 - 400 pts)
+            {
+                diff: 3, pts: 300,
+                ar: { q: "ما هو العنصر الكيميائي الذي رمزه 'O'؟", opts: ["الأكسجين", "الذهب", "الفضة", "الهيدروجين"], a: 0 },
+                en: { q: "Which chemical element has the symbol 'O'?", opts: ["Oxygen", "Gold", "Silver", "Hydrogen"], a: 0 }
+            },
+            {
+                diff: 3, pts: 300,
+                ar: { q: "في أي قارة تقع دولة البرازيل؟", opts: ["أمريكا الجنوبية", "أمريكا الشمالية", "أفريقيا", "آسيا"], a: 0 },
+                en: { q: "In which continent is Brazil located?", opts: ["South America", "North America", "Africa", "Asia"], a: 0 }
+            },
+            {
+                diff: 4, pts: 400,
+                ar: { q: "من هو مخترع المصباح الكهربائي؟", opts: ["توماس إديسون", "نيكولا تسلا", "ألكسندر غراهام بيل", "إسحاق نيوتن"], a: 0 },
+                en: { q: "Who invented the electric light bulb?", opts: ["Thomas Edison", "Nikola Tesla", "Alexander Graham Bell", "Isaac Newton"], a: 0 }
+            },
+            {
+                diff: 4, pts: 400,
+                ar: { q: "ما هي أسرع الكائنات الحية على اليابسة؟", opts: ["الفهد", "الأسد", "الغزال", "الحصان"], a: 0 },
+                en: { q: "What is the fastest land animal?", opts: ["Cheetah", "Lion", "Gazelle", "Horse"], a: 0 }
+            },
+
+            // Level 5 & 6: Medium to Hard (500 - 600 pts)
+            {
+                diff: 5, pts: 500,
+                ar: { q: "ما هي أكبر قارة في العالم من حيث المساحة؟", opts: ["آسيا", "أفريقيا", "أمريكا الشمالية", "أوروبا"], a: 0 },
+                en: { q: "What is the largest continent by land area?", opts: ["Asia", "Africa", "North America", "Europe"], a: 0 }
+            },
+            {
+                diff: 5, pts: 500,
+                ar: { q: "ما هو الغاز الأكثر وجوداً في الغلاف الجوي للأرض؟", opts: ["النيتروجين", "الأكسجين", "ثاني أكسيد الكربون", "الهيليوم"], a: 0 },
+                en: { q: "Which gas is most abundant in Earth's atmosphere?", opts: ["Nitrogen", "Oxygen", "Carbon Dioxide", "Helium"], a: 0 }
+            },
+            {
+                diff: 6, pts: 600,
+                ar: { q: "من كتب مسرحية 'روميو وجولييت'؟", opts: ["ويليام شكسبير", "تشارلز ديكنز", "فيكتور هوغو", "موليير"], a: 0 },
+                en: { q: "Who wrote the play 'Romeo and Juliet'?", opts: ["William Shakespeare", "Charles Dickens", "Victor Hugo", "Molière"], a: 0 }
+            },
+            {
+                diff: 6, pts: 600,
+                ar: { q: "ما هي عملة اليابان الرسمية؟", opts: ["الين", "الوان", "الايوان", "الدولار"], a: 0 },
+                en: { q: "What is the official currency of Japan?", opts: ["Yen", "Won", "Yuan", "Dollar"], a: 0 }
+            },
+
+            // Level 7 & 8: Hard (700 - 800 pts)
+            {
+                diff: 7, pts: 700,
+                ar: { q: "كم عدد قلوب الأخطبوط؟", opts: ["3 قلوب", "قلب واحد", "قلبان", "4 قلوب"], a: 0 },
+                en: { q: "How many hearts does an octopus have?", opts: ["3 Hearts", "1 Heart", "2 Hearts", "4 Hearts"], a: 0 }
+            },
+            {
+                diff: 7, pts: 700,
+                ar: { q: "أي دولة فازت بكأس العالم لكرة القدم 2018؟", opts: ["فرنسا", "كرواتيا", "البرازيل", "ألمانيا"], a: 0 },
+                en: { q: "Which country won the 2018 FIFA World Cup?", opts: ["France", "Croatia", "Brazil", "Germany"], a: 0 }
+            },
+            {
+                diff: 8, pts: 800,
+                ar: { q: "ما هو المعدن السائل الوحيد في درجة حرارة الغرفة؟", opts: ["الزئبق", "البروم", "الحديد", "الرصاص"], a: 0 },
+                en: { q: "What is the only metal that is liquid at room temperature?", opts: ["Mercury", "Bromine", "Iron", "Lead"], a: 0 }
+            },
+            {
+                diff: 8, pts: 800,
+                ar: { q: "أي دولة تعرف بـ 'أرض الشمس المشرقة'؟", opts: ["اليابان", "الصين", "كوريا", "تايلاند"], a: 0 },
+                en: { q: "Which country is known as the 'Land of the Rising Sun'?", opts: ["Japan", "China", "Korea", "Thailand"], a: 0 }
+            },
+
+            // Level 9 & 10: Very Hard (900 - 1000 pts)
+            {
+                diff: 9, pts: 900,
+                ar: { q: "ما هي أعمق نقطة على سطح الأرض؟", opts: ["خندق ماريانا", "خندق بورتوريكو", "أخدود جاوا", "حوض القطب الشمالي"], a: 0 },
+                en: { q: "What is the deepest point in the world's oceans?", opts: ["Mariana Trench", "Puerto Rico Trench", "Java Trench", "Arctic Basin"], a: 0 }
+            },
+            {
+                diff: 9, pts: 900,
+                ar: { q: "في أي عام انتهت الحرب العالمية الثانية؟", opts: ["1945", "1939", "1918", "1950"], a: 0 },
+                en: { q: "In which year did World War II end?", opts: ["1945", "1939", "1918", "1950"], a: 0 }
+            },
+            {
+                diff: 10, pts: 1000,
+                ar: { q: "ما هو الرمز الكيميائي لعنصر الذهب؟", opts: ["Au", "Ag", "Fe", "Cu"], a: 0 },
+                en: { q: "What is the chemical symbol for Gold?", opts: ["Au", "Ag", "Fe", "Cu"], a: 0 }
+            },
+            {
+                diff: 10, pts: 1000,
+                ar: { q: "ما هي أطول عظمة في جسم الإنسان؟", opts: ["عظمة الفخذ", "عظمة الساق", "عظمة العضد", "الجمجمة"], a: 0 },
+                en: { q: "What is the longest bone in the human body?", opts: ["Femur", "Tibia", "Humerus", "Skull"], a: 0 }
+            }
+        ];
+
+        // Application Main State Controller
+        class App {
+            constructor() {
+                this.lang = 'ar';
+                this.theme = 'light';
+                this.currentView = 'main';
+                this.player = {
+                    name: 'لاعب المعلّم',
+                    age: 20,
+                    country: 'SA',
+                    flag: '🇸🇦',
+                    score: 0,
+                    stages: 0,
+                    correct: 0,
+                    wrong: 0
+                };
+                this.gameSession = {
+                    active: false,
+                    currentQuestionIdx: 0,
+                    questions: [],
+                    stagePoints: 0,
+                    stageCorrect: 0
+                };
+            }
+
+            init() {
+                this.populateCountries();
+                this.applyLanguage();
+                this.setupAuthCallback();
+                this.loadLocalSettings();
+            }
+
+            setupAuthCallback() {
+                window.onUserAuthenticated = (user) => {
+                    const idLabel = document.getElementById('profileUniqueId');
+                    if (idLabel) idLabel.textContent = `ID: ${user.uid.substring(0, 10)}...`;
+                    this.loadProfileFromFirestore(user.uid);
+                };
+            }
+
+            loadLocalSettings() {
+                const savedTheme = localStorage.getItem('muallim_theme');
+                if (savedTheme === 'dark') this.setTheme('dark');
+            }
+
+            toggleTheme() {
+                this.setTheme(this.theme === 'light' ? 'dark' : 'light');
+            }
+
+            setTheme(mode) {
+                this.theme = mode;
+                const icon = document.getElementById('themeIcon');
+                if (mode === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    icon.className = 'fa-solid fa-sun';
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    icon.className = 'fa-solid fa-moon';
+                }
+                localStorage.setItem('muallim_theme', mode);
+            }
+
+            toggleLanguage() {
+                this.lang = this.lang === 'ar' ? 'en' : 'ar';
+                document.documentElement.lang = this.lang;
+                document.documentElement.dir = this.lang === 'ar' ? 'rtl' : 'ltr';
+                document.getElementById('langLabel').textContent = this.lang === 'ar' ? 'EN' : 'عربي';
+                this.applyLanguage();
+            }
+
+            applyLanguage() {
+                const t = translations[this.lang];
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (t[key]) el.textContent = t[key];
+                });
+
+                // Update dynamic view elements if game active
+                if (this.gameSession.active) {
+                    this.renderQuestion();
+                }
+            }
+
+            populateCountries() {
+                const select = document.getElementById('selectCountry');
+                if (!select) return;
+                select.innerHTML = '';
+                countriesList.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.code;
+                    opt.textContent = `${c.flag} ${c.name}`;
+                    select.appendChild(opt);
+                });
+            }
+
+            navigateTo(viewId) {
+                document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+                const target = document.getElementById(`view-${viewId}`);
+                if (target) {
+                    target.classList.remove('hidden');
+                    this.currentView = viewId;
+                }
+
+                if (viewId === 'leaderboard') {
+                    this.fetchLeaderboard();
+                }
+            }
+
+            // Game Logic
+            startNewGame() {
+                // Select 10 questions sorted by difficulty 1 -> 10
+                const selectedQs = [];
+                for (let d = 1; d <= 10; d++) {
+                    const pool = questionBank.filter(q => q.diff === d);
+                    const chosen = pool[Math.floor(Math.random() * pool.length)];
+                    selectedQs.push(chosen);
+                }
+
+                this.gameSession = {
+                    active: true,
+                    currentQuestionIdx: 0,
+                    questions: selectedQs,
+                    stagePoints: 0,
+                    stageCorrect: 0
+                };
+
+                this.navigateTo('game');
+                this.renderQuestion();
+            }
+
+            renderQuestion() {
+                const session = this.gameSession;
+                if (session.currentQuestionIdx >= 10) {
+                    this.completeStage();
+                    return;
+                }
+
+                const qData = session.questions[session.currentQuestionIdx];
+                const langData = qData[this.lang];
+
+                document.getElementById('qNumberBadge').textContent = session.currentQuestionIdx + 1;
+                document.getElementById('qPointsBadge').textContent = `+${qData.pts}`;
+                
+                // Difficulty text
+                const t = translations[this.lang];
+                let diffText = t.diffEasy;
+                if (qData.diff >= 3 && qData.diff <= 5) diffText = t.diffMedium;
+                else if (qData.diff >= 6 && qData.diff <= 8) diffText = t.diffHard;
+                else if (qData.diff >= 9) diffText = t.diffVeryHard;
+                document.getElementById('qDifficultyLabel').textContent = diffText;
+
+                // Progress Bar
+                const pct = ((session.currentQuestionIdx + 1) / 10) * 100;
+                document.getElementById('gameProgressBar').style.width = `${pct}%`;
+
+                // Question Text
+                document.getElementById('questionText').textContent = langData.q;
+
+                // Shuffle Options safely while maintaining correct index tracking
+                const grid = document.getElementById('choicesGrid');
+                grid.innerHTML = '';
+
+                const optionsWithMeta = langData.opts.map((text, idx) => ({
+                    text,
+                    isCorrect: idx === langData.a
+                }));
+
+                // Simple Fisher-Yates Shuffle
+                for (let i = optionsWithMeta.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [optionsWithMeta[i], optionsWithMeta[j]] = [optionsWithMeta[j], optionsWithMeta[i]];
+                }
+
+                optionsWithMeta.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full py-4 px-5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 font-bold text-base shadow-sm transition-all transform active:scale-98 flex items-center justify-between";
+                    btn.innerHTML = `<span>${opt.text}</span> <i class="fa-regular fa-circle text-slate-300 dark:text-slate-600"></i>`;
+                    
+                    btn.onclick = () => this.handleAnswer(btn, opt.isCorrect, qData.pts);
+                    grid.appendChild(btn);
+                });
+            }
+
+            handleAnswer(selectedBtn, isCorrect, points) {
+                // Lock buttons to prevent multiple clicks
+                const allBtns = document.querySelectorAll('#choicesGrid button');
+                allBtns.forEach(b => b.disabled = true);
+
+                if (isCorrect) {
+                    audio.playCorrect();
+                    selectedBtn.className = "w-full py-4 px-5 rounded-2xl bg-emerald-500 text-white font-bold text-base shadow-lg shadow-emerald-500/30 flex items-center justify-between border border-emerald-400";
+                    selectedBtn.querySelector('i').className = "fa-solid fa-circle-check text-white";
+                    this.gameSession.stagePoints += points;
+                    this.gameSession.stageCorrect++;
+                    this.player.correct++;
+                } else {
+                    audio.playWrong();
+                    selectedBtn.className = "w-full py-4 px-5 rounded-2xl bg-rose-500 text-white font-bold text-base shadow-lg shadow-rose-500/30 flex items-center justify-between border border-rose-400";
+                    selectedBtn.querySelector('i').className = "fa-solid fa-circle-xmark text-white";
+                    this.player.wrong++;
+                }
+
+                // Advance to next question after 1.2s delay
+                setTimeout(() => {
+                    this.gameSession.currentQuestionIdx++;
+                    this.renderQuestion();
+                }, 1200);
+            }
+
+            completeStage() {
+                audio.playComplete();
+                this.gameSession.active = false;
+
+                this.player.score += this.gameSession.stagePoints;
+                this.player.stages += 1;
+
+                // Sync stats to UI & Firestore
+                this.updateUIStats();
+                this.saveProfileToFirestore();
+
+                // Show Results Screen
+                document.getElementById('resultStageScore').textContent = `+${this.gameSession.stagePoints}`;
+                document.getElementById('resultTotalScore').textContent = this.player.score;
+                document.getElementById('resultCorrectStats').textContent = `${this.gameSession.stageCorrect}/10`;
+
+                this.navigateTo('result');
+            }
+
+            updateUIStats() {
+                document.getElementById('mainPlayerScore').textContent = this.player.score;
+                document.getElementById('mainPlayerStages').textContent = this.player.stages;
+                document.getElementById('statCorrectCount').textContent = this.player.correct;
+                document.getElementById('statWrongCount').textContent = this.player.wrong;
+
+                document.getElementById('profileDisplayName').textContent = this.player.name;
+                document.getElementById('profileFlagBadge').textContent = this.player.flag;
+                document.getElementById('inputName').value = this.player.name;
+                document.getElementById('inputAge').value = this.player.age;
+                document.getElementById('selectCountry').value = this.player.country;
+            }
+
+            // Firestore Data Persistence
+            async saveProfileToFirestore() {
+                if (!window.currentUser || !window.db) return;
+                try {
+                    const userId = window.currentUser.uid;
+                    const docRef = window.firestoreDoc(window.db, 'artifacts', window.appId, 'public', 'data', 'players', userId);
+                    
+                    const payload = {
+                        name: this.player.name,
+                        age: parseInt(this.player.age) || 20,
+                        country: this.player.country,
+                        flag: this.player.flag,
+                        score: this.player.score,
+                        stages: this.player.stages,
+                        correct: this.player.correct,
+                        wrong: this.player.wrong,
+                        updatedAt: new Date().toISOString()
+                    };
+
+                    await window.firestoreSetDoc(docRef, payload, { merge: true });
+                } catch (e) {
+                    console.warn("Firestore save error:", e);
+                }
+            }
+
+            async loadProfileFromFirestore(userId) {
+                if (!window.db) return;
+                try {
+                    const docRef = window.firestoreDoc(window.db, 'artifacts', window.appId, 'public', 'data', 'players', userId);
+                    const snap = await window.firestoreGetDoc(docRef);
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        this.player = { ...this.player, ...data };
+                        this.updateUIStats();
+                    } else {
+                        // Create initial profile
+                        this.saveProfileToFirestore();
+                    }
+                } catch (e) {
+                    console.warn("Firestore load error:", e);
+                }
+            }
+
+            async saveProfile(event) {
+                event.preventDefault();
+                const name = document.getElementById('inputName').value.trim();
+                const age = document.getElementById('inputAge').value;
+                const countryCode = document.getElementById('selectCountry').value;
+                
+                const countryObj = countriesList.find(c => c.code === countryCode) || countriesList[0];
+
+                this.player.name = name || 'لاعب المعلّم';
+                this.player.age = age;
+                this.player.country = countryCode;
+                this.player.flag = countryObj.flag;
+
+                this.updateUIStats();
+                await this.saveProfileToFirestore();
+                this.navigateTo('main');
+            }
+
+            fetchLeaderboard() {
+                const listEl = document.getElementById('leaderboardList');
+                if (!window.db) {
+                    listEl.innerHTML = `<div class="text-center py-4 text-slate-400">Offline Leaderboard</div>`;
+                    return;
+                }
+
+                const colRef = window.firestoreCollection(window.db, 'artifacts', window.appId, 'public', 'data', 'players');
+                
+                // Realtime Leaderboard updates
+                window.firestoreOnSnapshot(colRef, (snapshot) => {
+                    const players = [];
+                    snapshot.forEach(doc => {
+                        players.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    // Sort in memory by score descending (Rule 2 adherence)
+                    players.sort((a, b) => (b.score || 0) - (a.score || 0));
+
+                    listEl.innerHTML = '';
+                    if (players.length === 0) {
+                        listEl.innerHTML = `<div class="text-center py-6 text-slate-400">لا يوجد لاعبين بعد</div>`;
+                        return;
+                    }
+
+                    players.forEach((p, index) => {
+                        const isTop3 = index < 3;
+                        let rankBadge = `<span class="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-xs">${index + 1}</span>`;
+                        if (index === 0) rankBadge = `<span class="w-8 h-8 rounded-full bg-amber-400 text-amber-950 flex items-center justify-center font-black text-sm shadow-md">🥇</span>`;
+                        if (index === 1) rankBadge = `<span class="w-8 h-8 rounded-full bg-slate-300 text-slate-900 flex items-center justify-center font-black text-sm shadow-md">🥈</span>`;
+                        if (index === 2) rankBadge = `<span class="w-8 h-8 rounded-full bg-amber-600 text-white flex items-center justify-center font-black text-sm shadow-md">🥉</span>`;
+
+                        const row = document.createElement('div');
+                        row.className = `flex items-center justify-between p-3.5 rounded-2xl ${isTop3 ? 'bg-gradient-to-r from-sky-500/10 to-indigo-500/10 border border-sky-500/20' : 'bg-slate-100/60 dark:bg-slate-800/40'}`;
+                        row.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                ${rankBadge}
+                                <span class="text-2xl">${p.flag || '🏳️'}</span>
+                                <div>
+                                    <h4 class="font-bold text-slate-800 dark:text-slate-100 text-sm">${p.name || 'لاعب'}</h4>
+                                    <span class="text-xs text-slate-400">${p.stages || 0} مراحل مكتملة</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-black text-sky-600 dark:text-sky-400 text-base">${p.score || 0}</span>
+                                <span class="text-xs text-slate-400 block">نقطة</span>
+                            </div>
+                        `;
+                        listEl.appendChild(row);
+                    });
+                }, (error) => {
+                    console.warn("Leaderboard snapshot error:", error);
+                });
+            }
+        }
+
+        // Launch App on DOM ready
+        const app = new App();
+        window.app = app;
+        window.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+    </script>
+</body>
+</html>
